@@ -1,9 +1,11 @@
-//jshint esversion:6
+//dotenv npm can store sensitive information in a .env file
+require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const encrypt = require("mongoose-encryption");
+
 
 const app =express();
 
@@ -19,8 +21,9 @@ const userSchema = new mongoose.Schema({
 });
 
 //this plugin will encrypt specified field
-var secret = "Thisisourlittlesecret";
-userSchema.plugin(encrypt,{secret:secret,encryptedFields:["password"]});
+//secret key is stored in .env file
+//using process.env.SECRET to call the variable that we need from .env file
+userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields:["password"]});
 
 const User = new mongoose.model("User",userSchema);
 //-----------------RESTful API--------------------//

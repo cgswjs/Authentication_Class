@@ -4,8 +4,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-//md5 is a hash encriptyon module
-const md5 = require("md5");
+//use bcrypt
+const bcrypt = require('bcrypt');
+const saltRound = 10;
 
 const app =express();
 
@@ -35,34 +36,39 @@ app.get("/register",function(req,res){
 });
 
 app.post("/register",function(req,res){
-  const newUser = new User({
-    //req.body.<name in form>
-    email: req.body.username,
-    password:md5(req.body.password)
-  });
-  newUser.save(function(err){
-    if(err){
-      console.log(err);
-    }else{
-      res.render("secrets");
-    }
+  bcrypt.hash(req.body.password,saltRound, function(err,hash){
+    const newUser = new User({
+      //req.body.<name in form>
+      email: req.body.username,
+      password:hash
+    });
+    newUser.save(function(err){
+      if(err){
+        console.log(err);
+      }else{
+        res.render("secrets");
+      }
+    });
   });
 });
+
+//using hash-salting method to authenticate
 app.post("/login",function(req,res){
   const username = req.body.username;
-  const password = md5(req.body.password);
+  const password = req.body.password;
   User.findOne({email:username},function(err,foundUser){
     if(foundUser){
-      if(foundUser.password === password){
-        res.render("secrets");
-      }else{
-        res.send("Password doesn't match")
-      }
+      bcrypt.compare(password,foundUser.password,function(err,result){
+        if(result === true){
+          res.render("secrets");
+        }else{
+          res.send("Password doesn't match")}
+      });
     }else{
       res.send("<h1>You are not a registered user, please sign up</h1>")
-    }
-  })
-})
+      }
+    });
+});
 
 
 

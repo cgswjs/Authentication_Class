@@ -42,7 +42,8 @@ const userSchema = new mongoose.Schema({
   email:String,
   password:String,
   //add this googleId for findOrCreate method
-  googleId:String
+  googleId:String,
+  secret:String
 });
 
 //use passport local mongoose
@@ -104,14 +105,44 @@ app.get("/register",function(req,res){
 });
 
 app.get("/secrets",function(req,res){
-  //check if user already logged in using passport method
+  User.find({"secret":{$ne: null}},function(err,foundUsers){
+    if(err){
+      console.log(err);
+    }else{
+      if(foundUsers){
+        //usersWithSecrets is passed to ejs file
+        res.render("secrets",{usersWithSecrets:foundUsers})
+      }
+    }
+  });
+});
+
+app.get("/submit",function(req,res){
   if(req.isAuthenticated()){
-    res.render("secrets");
+    res.render("submit");
   }else{
     res.redirect("/login");
   }
 });
 
+app.post("/submit",function(req,res){
+  //get input data from ejs file
+  const submittedSecret = req.body.secret;
+  User.findById(req.user.id,function(err,foundUser){
+    if(err){
+      console.log(err);
+    }else{
+        if(foundUser){
+          foundUser.secret = submittedSecret;
+          foundUser.save(function(){
+            res.redirect("/secrets")
+          });
+        }
+    }
+  });
+
+
+});
 //logout method from passport
 app.get("/logout",function(req,res){
   req.logout();
